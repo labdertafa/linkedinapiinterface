@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.laboratorio</groupId>
     <artifactId>linkedinapiinterface</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.2</version>
     <packaging>jar</packaging>
     <name>LinkedIn-Api-Interface</name>
-    <description>Librería que ejecutar las API de la red social LinkedIn</description>
+    <description>Librería que ejecuta las API de la red social LinkedIn</description>
     
     <url>https://github.com/labdertafa/linkedinapiinterface</url>
     <licenses>
@@ -34,8 +34,8 @@
     
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <maven.compiler.source>18</maven.compiler.source>
-        <maven.compiler.target>18</maven.compiler.target>
+        <maven.compiler.source>21</maven.compiler.source>
+        <maven.compiler.target>21</maven.compiler.target>
     </properties>
     
     <dependencies>

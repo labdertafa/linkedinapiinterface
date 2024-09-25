@@ -31,31 +31,32 @@ import org.apache.logging.log4j.Logger;
  * @author Rafael
  * @version 1.0
  * @created 24/08/2024
- * @updated 25/08/2024
+ * @updated 25/09/2024
  */
 public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     protected static final Logger log = LogManager.getLogger(LinkedInStatusApiImpl.class);
     private final String accessToken;
     private final String author;
     private final LinkedInApiConfig apiConfig;
+    private final String urlBase;
 
     public LinkedInStatusApiImpl(String accessToken, String author) {
         this.accessToken = accessToken;
         this.author = author;
         this.apiConfig = LinkedInApiConfig.getInstance();
+        this.urlBase = this.apiConfig.getProperty("url_base_linkedin");
     }
     
     private void logException(Exception e) {
         log.error("Error: " + e.getMessage());
         if (e.getCause() != null) {
-            log.error("Causa: " + e.getMessage());
+            log.error("Causa: " + e.getCause().getMessage());
         }
     }
     
     private LinkedInPostMessageResponse postStatus(LinkedInPostMessage request) {
         Client client = ClientBuilder.newClient();
         Response response = null;
-        String urlBase = this.apiConfig.getProperty("url_base_linkedin");
         String endpoint = this.apiConfig.getProperty("endpoint_ugcPosts");
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("ugcPosts_valor_ok"));
         
@@ -65,7 +66,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             String requestJson = gson.toJson(request);
             log.info("Request a enviar: " + requestJson);
             
-            String url = urlBase + "/" + endpoint;
+            String url = this.urlBase + "/" + endpoint;
             WebTarget target = client.target(url);
             
             response = target.request(MediaType.APPLICATION_JSON)
@@ -80,7 +81,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             }
             
             log.debug("Se ejecutó la query: " + url);
-            log.info("Respuesta recibida: " + jsonStr);
+            log.debug("Respuesta recibida: " + jsonStr);
             
             return gson.fromJson(jsonStr, LinkedInPostMessageResponse.class);
         } catch (JsonSyntaxException e) {
@@ -109,12 +110,11 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     public boolean deleteStatus(String messageId) {
         Client client = ClientBuilder.newClient();
         Response response = null;
-        String urlBase = this.apiConfig.getProperty("url_base_linkedin");
         String endpoint = this.apiConfig.getProperty("endpoint_delete_post");
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("delete_post_valor_ok"));
         
         try {
-            String url = urlBase + "/" + endpoint + "/" + messageId;
+            String url = this.urlBase + "/" + endpoint + "/" + messageId;
             WebTarget target = client.target(url);
             
             response = target.request(MediaType.APPLICATION_JSON)
@@ -147,7 +147,6 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     public LinkedInRegisterUploadResponse registerUpload() {
         Client client = ClientBuilder.newClient();
         Response response = null;
-        String urlBase = this.apiConfig.getProperty("url_base_linkedin");
         String endpoint = this.apiConfig.getProperty("endpoint_registerUpload");
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("registerUpload_valor_ok"));
         
@@ -158,7 +157,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             String requestJson = gson.toJson(request);
             log.info("Request a enviar: " + requestJson);
             
-            String url = urlBase + "/" + endpoint;
+            String url = this.urlBase + "/" + endpoint;
             WebTarget target = client.target(url)
                     .queryParam("action", "registerUpload");
             
@@ -174,7 +173,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             }
             
             log.debug("Se ejecutó la query: " + url);
-            log.info("Respuesta recibida: " + jsonStr);
+            log.debug("Respuesta recibida: " + jsonStr);
             
             return gson.fromJson(jsonStr, LinkedInRegisterUploadResponse.class);
         } catch (JsonSyntaxException e) {
