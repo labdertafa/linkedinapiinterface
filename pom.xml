@@ -3,10 +3,10 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.laboratorio</groupId>
     <artifactId>linkedinapiinterface</artifactId>
-    <version>1.0.2</version>
+    <version>1.1.0</version>
     <packaging>jar</packaging>
     <name>LinkedIn-Api-Interface</name>
-    <description>Librería que ejecuta las API de la red social LinkedIn</description>
+    <description>Librería que ejecuta la API de la red social LinkedIn</description>
     
     <url>https://github.com/labdertafa/linkedinapiinterface</url>
     <licenses>
@@ -38,23 +38,26 @@
         <maven.compiler.target>21</maven.compiler.target>
     </properties>
     
+    <repositories>
+        <repository>
+            <id>github_00</id>
+            <name>GitHub Packages</name>
+            <url>https://maven.pkg.github.com/labdertafa/clientapilibrary/</url>
+        </repository>
+    </repositories>
+    
     <dependencies>
+        <dependency>
+            <groupId>com.laboratorio</groupId>
+            <artifactId>clientapilibrary</artifactId>
+            <version>2.0.5</version>
+        </dependency>
+        
         <dependency>
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.18.34</version>
             <scope>provided</scope>
-        </dependency>
-        
-        <dependency>
-            <groupId>javax.ws.rs</groupId>
-            <artifactId>javax.ws.rs-api</artifactId>
-            <version>2.1.1</version>
-        </dependency>
-        <dependency>
-            <groupId>org.jboss.resteasy</groupId>
-            <artifactId>resteasy-client</artifactId>
-            <version>4.7.6.Final</version>
         </dependency>
         
         <dependency>

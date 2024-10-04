@@ -2,8 +2,14 @@ package com.laboratorio.linkedinapiinterface.impl;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
+import com.laboratorio.clientapilibrary.ApiClient;
+import com.laboratorio.clientapilibrary.exceptions.ApiClientException;
+import com.laboratorio.clientapilibrary.model.ApiMethodType;
+import com.laboratorio.clientapilibrary.model.ApiRequest;
+import com.laboratorio.clientapilibrary.model.ApiResponse;
+import com.laboratorio.clientapilibrary.utils.ImageMetadata;
+import com.laboratorio.clientapilibrary.utils.PostUtils;
 import com.laboratorio.linkedinapiinterface.LinkedInStatusApi;
-import com.laboratorio.linkedinapiinterface.exception.LinkedInApiException;
 import com.laboratorio.linkedinapiinterface.model.LinkedInPostMessage;
 import com.laboratorio.linkedinapiinterface.model.LinkedInRegisterUpload;
 import com.laboratorio.linkedinapiinterface.model.LinkedInShareCommentary;
@@ -13,38 +19,32 @@ import com.laboratorio.linkedinapiinterface.model.response.LinkedInPostMessageRe
 import com.laboratorio.linkedinapiinterface.model.response.LinkedInRegisterUploadResponse;
 import com.laboratorio.linkedinapiinterface.utils.LinkedInApiConfig;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.InputStream;
-import javax.ws.rs.client.Client;
-import javax.ws.rs.client.ClientBuilder;
-import javax.ws.rs.client.Entity;
-import javax.ws.rs.client.WebTarget;
-import javax.ws.rs.core.HttpHeaders;
-import javax.ws.rs.core.MediaType;
-import javax.ws.rs.core.Response;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
 /**
  *
  * @author Rafael
- * @version 1.0
+ * @version 1.1
  * @created 24/08/2024
- * @updated 25/09/2024
+ * @updated 04/10/2024
  */
 public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     protected static final Logger log = LogManager.getLogger(LinkedInStatusApiImpl.class);
+    private final ApiClient client;
     private final String accessToken;
     private final String author;
     private final LinkedInApiConfig apiConfig;
     private final String urlBase;
+    private final Gson gson;
 
     public LinkedInStatusApiImpl(String accessToken, String author) {
+        this.client = new ApiClient();
         this.accessToken = accessToken;
         this.author = author;
         this.apiConfig = LinkedInApiConfig.getInstance();
         this.urlBase = this.apiConfig.getProperty("url_base_linkedin");
+        this.gson = new Gson();
     }
     
     private void logException(Exception e) {
@@ -54,46 +54,27 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
         }
     }
     
-    private LinkedInPostMessageResponse postStatus(LinkedInPostMessage request) {
-        Client client = ClientBuilder.newClient();
-        Response response = null;
+    private LinkedInPostMessageResponse postStatus(LinkedInPostMessage postMessage) {
         String endpoint = this.apiConfig.getProperty("endpoint_ugcPosts");
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("ugcPosts_valor_ok"));
         
         try {
             // Se crea la request
-            Gson gson = new Gson();
-            String requestJson = gson.toJson(request);
-            log.info("Request a enviar: " + requestJson);
+            String requestJson = this.gson.toJson(postMessage);
+            log.debug("Request a enviar: " + requestJson);
             
             String url = this.urlBase + "/" + endpoint;
-            WebTarget target = client.target(url);
+            ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.POST, requestJson);
+            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
             
-            response = target.request(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.accessToken)
-                    .post(Entity.entity(requestJson, MediaType.APPLICATION_JSON));
+            ApiResponse response = this.client.executeApiRequest(request);
             
-            String jsonStr = response.readEntity(String.class);
-            if (response.getStatus() != okStatus) {
-                log.error(String.format("Respuesta del error %d: %s", response.getStatus(), jsonStr));
-                String str = "Error ejecutando: " + url + ". Se obtuvo el código de error: " + response.getStatus();
-                throw new LinkedInApiException(LinkedInStatusApiImpl.class.getName(), str);
-            }
-            
-            log.debug("Se ejecutó la query: " + url);
-            log.debug("Respuesta recibida: " + jsonStr);
-            
-            return gson.fromJson(jsonStr, LinkedInPostMessageResponse.class);
+            return this.gson.fromJson(response.getResponseStr(), LinkedInPostMessageResponse.class);
         } catch (JsonSyntaxException e) {
             logException(e);
             throw  e;
-        } catch (LinkedInApiException e) {
+        } catch (ApiClientException e) {
             throw  e;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-            client.close();
         }
     }
 
@@ -108,124 +89,72 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
 
     @Override
     public boolean deleteStatus(String messageId) {
-        Client client = ClientBuilder.newClient();
-        Response response = null;
         String endpoint = this.apiConfig.getProperty("endpoint_delete_post");
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("delete_post_valor_ok"));
         
         try {
             String url = this.urlBase + "/" + endpoint + "/" + messageId;
-            WebTarget target = client.target(url);
+            ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.DELETE);
+            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
             
-            response = target.request(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.accessToken)
-                    .delete();
-            
-            if (response.getStatus() != okStatus) {
-                log.error(String.format("Se obtuvo el código de error %d", response.getStatus()));
-                String str = "Error ejecutando: " + url + ". Se obtuvo el código de error: " + response.getStatus();
-                throw new LinkedInApiException(LinkedInStatusApiImpl.class.getName(), str);
-            }
-            
-            log.debug("Se ejecutó la query: " + url);
+            this.client.executeApiRequest(request);
             
             return true;
         } catch (JsonSyntaxException e) {
             logException(e);
             throw  e;
-        } catch (LinkedInApiException e) {
+        } catch (ApiClientException e) {
             throw  e;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-            client.close();
         }
     }
     
     @Override
     public LinkedInRegisterUploadResponse registerUpload() {
-        Client client = ClientBuilder.newClient();
-        Response response = null;
         String endpoint = this.apiConfig.getProperty("endpoint_registerUpload");
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("registerUpload_valor_ok"));
         
         try {
             // Se crea la request
-            Gson gson = new Gson();
-            LinkedInRegisterUpload request = new LinkedInRegisterUpload(this.author);
-            String requestJson = gson.toJson(request);
-            log.info("Request a enviar: " + requestJson);
+            LinkedInRegisterUpload registerUpload = new LinkedInRegisterUpload(this.author);
+            String requestJson = gson.toJson(registerUpload);
+            log.debug("Request a enviar: " + requestJson);
             
             String url = this.urlBase + "/" + endpoint;
-            WebTarget target = client.target(url)
-                    .queryParam("action", "registerUpload");
+            ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.POST, requestJson);
+            request.addApiPathParam("action", "registerUpload");
+            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
             
-            response = target.request(MediaType.APPLICATION_JSON)
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.accessToken)
-                    .post(Entity.entity(requestJson, MediaType.APPLICATION_JSON));
-            
-            String jsonStr = response.readEntity(String.class);
-            if (response.getStatus() != okStatus) {
-                log.error(String.format("Respuesta del error %d: %s", response.getStatus(), jsonStr));
-                String str = "Error ejecutando: " + url + ". Se obtuvo el código de error: " + response.getStatus();
-                throw new LinkedInApiException(LinkedInStatusApiImpl.class.getName(), str);
-            }
-            
-            log.debug("Se ejecutó la query: " + url);
-            log.debug("Respuesta recibida: " + jsonStr);
-            
-            return gson.fromJson(jsonStr, LinkedInRegisterUploadResponse.class);
+            ApiResponse response = this.client.executeApiRequest(request);
+
+            return this.gson.fromJson(response.getResponseStr(), LinkedInRegisterUploadResponse.class);
         } catch (JsonSyntaxException e) {
             logException(e);
             throw  e;
-        } catch (LinkedInApiException e) {
+        } catch (ApiClientException e) {
             throw  e;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-            client.close();
         }
     }
     
     @Override
     public boolean uploadImage(String url, String imagePath) throws Exception {
-        Client client = ClientBuilder.newClient();
-        Response response = null;
         int okStatus = Integer.parseInt(this.apiConfig.getProperty("uploadImage_valor_ok"));
         
         try {
-            WebTarget target = client.target(url);
-            
             File imageFile = new File(imagePath);
-            InputStream fileStream = new FileInputStream(imageFile);
+            ImageMetadata metadata = PostUtils.extractImageMetadata(imagePath);
             
-            response = target.request()
-                    .header(HttpHeaders.AUTHORIZATION, "Bearer " + this.accessToken)
-                    .post(Entity.entity(fileStream, MediaType.APPLICATION_OCTET_STREAM_TYPE));
+            ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.POST, imageFile);
+            request.addApiHeader("Content-Type", metadata.getMimeType());
+            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
             
-            String jsonStr = response.readEntity(String.class);
-            if (response.getStatus() != okStatus) {
-                log.error(String.format("Respuesta del error %d: %s", response.getStatus(), jsonStr));
-                String str = "Error ejecutando: " + url + ". Se obtuvo el código de error: " + response.getStatus();
-                throw new LinkedInApiException(LinkedInStatusApiImpl.class.getName(), str);
-            }
-            
-            log.debug("Se ejecutó la query: " + url);
-            log.debug("Respuesta recibida: " + jsonStr);
-            
+            this.client.executeApiRequest(request);
+
             return true;
-        } catch (JsonSyntaxException | FileNotFoundException e) {
+        } catch (JsonSyntaxException e) {
             logException(e);
             throw  e;
-        } catch (LinkedInApiException e) {
+        } catch (ApiClientException e) {
             throw  e;
-        } finally {
-            if (response != null) {
-                response.close();
-            }
-            client.close();
         }
     }
     
