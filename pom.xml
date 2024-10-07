@@ -3,7 +3,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.laboratorio</groupId>
     <artifactId>linkedinapiinterface</artifactId>
-    <version>1.1.0</version>
+    <version>1.1.1</version>
     <packaging>jar</packaging>
     <name>LinkedIn-Api-Interface</name>
     <description>Librería que ejecuta la API de la red social LinkedIn</description>
@@ -50,7 +50,7 @@
         <dependency>
             <groupId>com.laboratorio</groupId>
             <artifactId>clientapilibrary</artifactId>
-            <version>2.0.5</version>
+            <version>2.0.19</version>
         </dependency>
         
         <dependency>
