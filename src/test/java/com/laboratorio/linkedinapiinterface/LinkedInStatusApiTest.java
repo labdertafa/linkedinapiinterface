@@ -1,8 +1,8 @@
 package com.laboratorio.linkedinapiinterface;
 
+import com.laboratorio.clientapilibrary.utils.ReaderConfig;
 import com.laboratorio.linkedinapiinterface.impl.LinkedInStatusApiImpl;
 import com.laboratorio.linkedinapiinterface.model.response.LinkedInPostMessageResponse;
-import com.laboratorio.linkedinapiinterface.utils.LinkedInApiConfig;
 import java.time.LocalDateTime;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -16,7 +16,7 @@ import org.junit.jupiter.api.TestMethodOrder;
  * @author Rafael
  * @version 1.0
  * @created 24/08/2024
- * @updated 24/08/2024
+ * @updated 04/05/2025
  */
 
 @TestMethodOrder(MethodOrderer.OrderAnnotation.class)
@@ -26,7 +26,7 @@ public class LinkedInStatusApiTest {
     
     @BeforeEach
     public void initTest() {
-        LinkedInApiConfig config = LinkedInApiConfig.getInstance();
+        ReaderConfig config = new ReaderConfig("config//linkedin_api.properties");
         String accessToken = config.getProperty("access_token_linkedin");
         String author = config.getProperty("urn_author_linkedin");
         

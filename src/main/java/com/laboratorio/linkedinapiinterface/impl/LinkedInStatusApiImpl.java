@@ -9,6 +9,7 @@ import com.laboratorio.clientapilibrary.model.ApiRequest;
 import com.laboratorio.clientapilibrary.model.ApiResponse;
 import com.laboratorio.clientapilibrary.utils.ImageMetadata;
 import com.laboratorio.clientapilibrary.utils.PostUtils;
+import com.laboratorio.clientapilibrary.utils.ReaderConfig;
 import com.laboratorio.linkedinapiinterface.LinkedInStatusApi;
 import com.laboratorio.linkedinapiinterface.model.LinkedInPostMessage;
 import com.laboratorio.linkedinapiinterface.model.LinkedInRegisterUpload;
@@ -17,7 +18,6 @@ import com.laboratorio.linkedinapiinterface.model.LinkedInShareContent;
 import com.laboratorio.linkedinapiinterface.model.LinkedInSpecificContent;
 import com.laboratorio.linkedinapiinterface.model.response.LinkedInPostMessageResponse;
 import com.laboratorio.linkedinapiinterface.model.response.LinkedInRegisterUploadResponse;
-import com.laboratorio.linkedinapiinterface.utils.LinkedInApiConfig;
 import java.io.File;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -27,14 +27,14 @@ import org.apache.logging.log4j.Logger;
  * @author Rafael
  * @version 1.1
  * @created 24/08/2024
- * @updated 04/10/2024
+ * @updated 04/05/2025
  */
 public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     protected static final Logger log = LogManager.getLogger(LinkedInStatusApiImpl.class);
     private final ApiClient client;
     private final String accessToken;
     private final String author;
-    private final LinkedInApiConfig apiConfig;
+    private final ReaderConfig apiConfig;
     private final String urlBase;
     private final Gson gson;
 
@@ -42,7 +42,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
         this.client = new ApiClient();
         this.accessToken = accessToken;
         this.author = author;
-        this.apiConfig = LinkedInApiConfig.getInstance();
+        this.apiConfig = new ReaderConfig("config//linkedin_api.properties");
         this.urlBase = this.apiConfig.getProperty("url_base_linkedin");
         this.gson = new Gson();
     }
