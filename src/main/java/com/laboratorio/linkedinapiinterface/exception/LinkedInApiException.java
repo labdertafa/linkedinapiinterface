@@ -3,15 +3,16 @@ package com.laboratorio.linkedinapiinterface.exception;
 /**
  *
  * @author Rafael
- * @version 1.1
+ * @version 1.2
  * @created 10/07/2024
- * @updated 04/05/2025
+ * @updated 13/12/2025
  */
 public class LinkedInApiException extends RuntimeException {
-    private Throwable causaOriginal = null;
+    private final Throwable causaOriginal;
     
     public LinkedInApiException(String message) {
         super(message);
+        this.causaOriginal = null;
     }
 
     public LinkedInApiException(String message, Throwable causaOriginal) {

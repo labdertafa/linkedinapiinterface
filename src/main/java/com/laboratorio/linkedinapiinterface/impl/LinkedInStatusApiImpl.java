@@ -25,12 +25,15 @@ import org.apache.logging.log4j.Logger;
 /**
  *
  * @author Rafael
- * @version 1.1
+ * @version 1.2
  * @created 24/08/2024
- * @updated 04/05/2025
+ * @updated 13/12/2025
  */
 public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     protected static final Logger log = LogManager.getLogger(LinkedInStatusApiImpl.class);
+    private static final String AUTHORIZATION = "Authorization";
+    private static final String BEARER = "Bearer ";
+    
     private final ApiClient client;
     private final String accessToken;
     private final String author;
@@ -39,12 +42,21 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
     private final Gson gson;
 
     public LinkedInStatusApiImpl(String accessToken, String author) {
-        this.client = new ApiClient();
         this.accessToken = accessToken;
         this.author = author;
         this.apiConfig = new ReaderConfig("config//linkedin_api.properties");
         this.urlBase = this.apiConfig.getProperty("url_base_linkedin");
         this.gson = new Gson();
+        String proxyHost = this.apiConfig.getProperty("linkedin_proxy_host");
+        String proxyPortStr = this.apiConfig.getProperty("linkedin_proxy_port");
+        String certificatePath = this.apiConfig.getProperty("linkedin_proxy_certificate");
+        if (proxyHost != null && !proxyHost.isBlank() && proxyPortStr != null && !proxyPortStr.isBlank()
+                && certificatePath != null && !certificatePath.isBlank()) {
+            int proxyPort = Integer.parseInt(proxyPortStr);
+            this.client = new ApiClient(proxyHost, proxyPort, certificatePath);
+        } else {
+            this.client = new ApiClient();
+        }
     }
     
     private LinkedInPostMessageResponse postStatus(LinkedInPostMessage postMessage) {
@@ -58,7 +70,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             
             String url = this.urlBase + "/" + endpoint;
             ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.POST, requestJson);
-            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
+            request.addApiHeader(AUTHORIZATION, BEARER + this.accessToken);
             
             ApiResponse response = this.client.executeApiRequest(request);
             
@@ -85,7 +97,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
         try {
             String url = this.urlBase + "/" + endpoint + "/" + messageId;
             ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.DELETE);
-            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
+            request.addApiHeader(AUTHORIZATION, BEARER + this.accessToken);
             
             this.client.executeApiRequest(request);
             
@@ -109,7 +121,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             String url = this.urlBase + "/" + endpoint;
             ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.POST, requestJson);
             request.addApiPathParam("action", "registerUpload");
-            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
+            request.addApiHeader(AUTHORIZATION, BEARER + this.accessToken);
             
             ApiResponse response = this.client.executeApiRequest(request);
 
@@ -129,7 +141,7 @@ public class LinkedInStatusApiImpl implements LinkedInStatusApi {
             
             ApiRequest request = new ApiRequest(url, okStatus, ApiMethodType.POST, imageFile);
             request.addApiHeader("Content-Type", metadata.getMimeType());
-            request.addApiHeader("Authorization", "Bearer " + this.accessToken);
+            request.addApiHeader(AUTHORIZATION, BEARER + this.accessToken);
             
             this.client.executeApiRequest(request);
 
